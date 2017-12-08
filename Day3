@@ -1,0 +1,24 @@
+(def dirs (list (list [1 0] (fn [xy n] (= (first xy) (inc n))))
+                (list [0 1] (fn [xy n] (= (second xy) n)))
+                (list [-1 0] (fn [xy n] (= (first xy) (- n))))
+                (list [0 -1] (fn [xy n] (= (second xy) (- n))))))
+
+(def adjacents '([1 0] [1 1] [0 1] [-1 1] [-1 0] [-1 -1] [0 -1] [1 -1]))
+
+(defn f [m x]
+  (->> adjacents
+       (map #(map + x %))
+       (map #(get-in m % 0))
+       (apply +)))
+
+(defn iter
+  ([top])
+  ([mp xy dirs-loc n top]
+       (let [val (f mp xy)]
+         (if (>= val top)
+             val
+             (recur (assoc-in xy val)
+                    )))))
+
+
+(f {0 {0 1 1 1} 1 {1 2 0 4}} [1 -1])
