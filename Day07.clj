@@ -1,17 +1,15 @@
 (defn build-maps [data]
   (letfn [(f [[map-deps map-weights] line]
-             (let [ls (clojure.string/split line #" ")
+             (let [ls (clojure.string/split line #",* ")
                    x (first ls)
                    n (Integer. (re-find  #"\d+" (second ls)))
                    ls (next (nnext ls))]
                (list
                  (if (nil? ls)
                      map-deps
-                     (assoc map-deps x (reduce #(assoc %1 %2 nil) {} ls)))
+                     (assoc map-deps x (reduce #(conj %1 %2) #{} ls)))
                    (assoc map-weights x n))))]
     (reduce f '({} {}) (clojure.string/split-lines data))))
-
-
 
 (def data "xcpuy (20)
 prxlb (35)
@@ -1440,3 +1438,39 @@ nbpkmt (60) -> thzvetu, qjcsn")
 (def data (build-maps data))
 (def stacks (first data))
 (def weights (second data))
+
+(defn tower-weight [towers x]
+  (reduce (fn [[mp ret] y]
+              (if (contains? mp y)
+                  (list mp (+ ret (mp y)))
+                  (let [[mp val] (tower-weight mp y)]
+                    (list (assoc mp y val) (+ ret val)))))
+          (list towers (weights x))
+          (stacks x)))
+
+(def towers (reduce (comp first tower-weight)
+                    (into {} (filter (fn [[k v]] (not (contains? stacks k))) weights))
+                    (keys stacks)))
+
+;(loop [nodes (keys stacks)
+;       possible-base (set nodes)]
+;  (if-let [x (first nodes)]
+;          (recur (next nodes)
+;                 (clojure.set/difference possible-base (set (stacks x))))
+;          (first (seq possible-base))))
+
+(def unbalanced (into {} (filter (fn [[k v]]
+                                     (apply not= (map towers v)))
+                                 stacks)))
+
+unbalanced
+(into {} (filter (fn [[k v]] (contains? unbalanced k))
+                 weights))
+
+(into {} (map #(vec (list % (weights %)))) (unbalanced "hmgrlpj"))
+(into {} (map #(vec (list % (towers %)))) (unbalanced "hmgrlpj"))
+
+(mapcat #(map towers %) (vals unbalanced))
+
+
+
